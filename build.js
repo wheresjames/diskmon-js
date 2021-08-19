@@ -138,9 +138,6 @@ function main()
     let src = __dirname;
     let dst = path.join(src, 'dist');
 
-    // Set working directory
-    process.chdir(dst);
-
     // Delete output directory if it already exists
     if (fs.existsSync(dst))
         fs.rmdirSync(dst, { recursive: true });
@@ -149,6 +146,9 @@ function main()
     fs.mkdirSync(dst);
     if (!fs.existsSync(dst))
         throw `Failed to create output directory : ${dst}`;
+
+    // Set working directory
+    process.chdir(dst);
 
     // Load the config file
     let fcfg = path.join(src, 'PROJECT.txt');
@@ -182,18 +182,21 @@ function main()
 
             // Did we get a package
             let npkg = `${cfg.name}-${cfg.version}.tgz`
-            let fpkg = path.join(dst, npkg);
-            if (!fs.existsSync(fpkg))
-            {   Log(`Failed to create package : ${fpkg}`);
+            let spkg = path.join(dst, npkg);
+            if (!fs.existsSync(spkg))
+            {   Log(`Failed to create package : ${spkg}`);
                 return;
             }
 
             // Copy package file
-            let dpkg = path.join(src, 'pkg', npkg);
-            if (fs.existsSync(dpkg))
-                fs.unlinkSync(dpkg);
-            fs.renameSync(fpkg, dpkg);
-            fs.copyFileSync(dpkg, path.join(src, 'pkg', `${cfg.name}-latest.tgz`));
+            let rpkg = path.join(src, 'pkg');
+            if (!fs.existsSync(rpkg))
+                fs.mkdirSync(rpkg);
+
+            // Copy package file
+            let dpkg = path.join(rpkg, npkg);
+            fs.renameSync(spkg, dpkg);
+            fs.copyFileSync(dpkg, path.join(rpkg, `${cfg.name}-latest.tgz`));
 
             Log(`Created : ./pkg/${cfg.name}-latest.tgz -> ./pkg/${npkg}\n`);
 
