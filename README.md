@@ -39,7 +39,7 @@ Groups list items using a compare function.
 ---------------------------------------------------------------------
 ## Install
 
-    $ npm install grplist
+    $ npm install diskmon
 
 &nbsp;
 

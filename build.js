@@ -164,7 +164,9 @@ function main()
         throw `Failed to create package file : ${pck_out}`;
 
     // Copy source files
-    fileCopy(path.join(src, 'src'), dst);
+    fs.copyFileSync(path.join(src, 'LICENSE'), path.join(dst, 'LICENSE'));
+    fs.copyFileSync(path.join(src, 'README.md'), path.join(dst, 'README.md'));
+    fileCopy(path.join(src, 'src'), path.join(dst, 'src'));
     fileCopy(path.join(src, 'test'), path.join(dst, 'test'));
 
     // Installing?
@@ -206,7 +208,6 @@ function main()
                     });
             }
         });
-
 }
 
 // Exit handling
