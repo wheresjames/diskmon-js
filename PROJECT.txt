@@ -1,0 +1,9 @@
+name            diskmon
+version         0.1.1
+description     Track changes in files and directories
+company         wheresjames
+author          Robert Umbehant
+email           diskmon@wheresjames.com
+url             https://github.com/wheresjames/diskmon-js
+repo            git+ssh://git@github.com/wheresjames/diskmon-js.git
+license         MIT

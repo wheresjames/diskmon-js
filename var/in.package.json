@@ -1,0 +1,28 @@
+{
+  "name": "%NAME%",
+  "version": "%VERSION%",
+  "description": "%DESCRIPTION%",
+  "main": "index.js",
+  "scripts": {
+    "test": "test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "%REPO%"
+  },
+  "dependencies": {
+  },
+  "keywords": [
+    "disk",
+    "directory",
+    "file",
+    "monitor",
+    "watch"
+  ],
+  "author": "%AUTHOR%",
+  "license": "%LICENSE%",
+  "bugs": {
+    "url": "%URL%/issues"
+  },
+  "homepage": "%URL%"
+}
