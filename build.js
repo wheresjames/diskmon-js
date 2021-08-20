@@ -6,26 +6,30 @@ const path = require('path');
 const Log = console.log;
 
 function loadConfig(fname)
-{   let r = {};
+{   if (!fs.existsSync(fname))
+        return {};
+    let r = {};
     let data = fs.readFileSync(fname, 'utf8');
     let lines = data.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
     lines.forEach(v =>
-        {   let parts = v.split(/\s+/);
-            if (1 < parts.length)
-            {   let k = parts.shift().trim().toLowerCase();
-                r[k] = parts.join(' ');
+        {   v = v.trim();
+            if ('#' != v[0])
+            {   let parts = v.split(/\s+/);
+                if (1 < parts.length)
+                {   let k = parts.shift().trim().toLowerCase();
+                    r[k] = parts.join(' ');
+                }
             }
         });
     return r;
 }
 
-function processFile(cfg, fin, fout)
-{
-    let data = fs.readFileSync(fin, 'utf8');
-    const rx = /(%.*?%)/g;
-
-    let m;
-    while((m = rx.exec(data)))
+function processFile(cfg, fin, fout, removeComments=true)
+{   let data = fs.readFileSync(fin, 'utf8');
+    if (removeComments)
+        data = data.replace(/[^\n]*\/\/.*\n/g, '').replace(/[^\n]*#.*\n/g, '');
+    const rx = /(%.*?%)/g
+    for (let m; m = rx.exec(data); m)
         if (0 <= m.index)
         {   let k = m[0].replace(/%/g, '').toLowerCase();
             if (k in cfg)
@@ -68,9 +72,34 @@ function parseParams(args, merge={})
 
 function fileCopy(src, dst, opts={overwrite:true, recursive:true, show:Log})
 {
+    // Ensure the source exists
+    if (!fs.existsSync(src))
+    {   if (opts.show)
+            opts.show(`[ignore] Not found: ${src}`);
+        return;
+    }
+
+    // If the source is a file just copy it
+    if (!fs.lstatSync(src).isDirectory())
+    {   fs.copyFileSync(src, dst);
+        if (opts.show)
+            opts.show(`[copied] ${src} -> ${dst}`);
+        return;
+    }
+
+    // Delete the destination if it exists
+    if (fs.existsSync(dst))
+    {   if (fs.lstatSync(dst).isDirectory())
+            fs.rmdirSync(dst, { recursive: true });
+        else
+            fs.unlinkSync(dst);
+    }
+
+    // Create the destination directory
     if (!fs.existsSync(dst))
         fs.mkdirSync(dst);
 
+    // Copy each file / directory
     let dirlist = fs.readdirSync(src);
     for (let i = 0; i < dirlist.length; i++)
     {
@@ -85,13 +114,13 @@ function fileCopy(src, dst, opts={overwrite:true, recursive:true, show:Log})
             let stat;
             try { stat = fs.lstatSync(fsrc); }
             catch(e) { if (opts.show) opts.show(e); continue; }
-            if (stat.isDirectory())
-            {   if (opts.recursive)
-                    rCopy(fsrc, fdst);
-            }
-            else
-                fs.copyFile(fsrc, fdst, (e) => { if (e && opts.show) opts.show(e) });
             status = 'copied';
+            if (!stat.isDirectory())
+                fs.copyFileSync(fsrc, fdst);
+            else if (opts.recursive)
+                rCopy(fsrc, fdst);
+            else
+                status = 'ignore';
         }
         if (status && opts.show)
             opts.show(`[${status}] ${fsrc} -> ${fdst}`);
@@ -102,7 +131,6 @@ function createDox()
 {
     return new Promise((resolve, reject)=>
     {
-        let isDox = false;
         let doxygen = null;
         try { doxygen = require('doxygen'); }
         catch(e){ return reject(e); }
@@ -164,9 +192,11 @@ function main()
         throw `Failed to create package file : ${pck_out}`;
 
     // Copy source files
-    fs.copyFileSync(path.join(src, 'LICENSE'), path.join(dst, 'LICENSE'));
-    fs.copyFileSync(path.join(src, 'README.md'), path.join(dst, 'README.md'));
-    fileCopy(path.join(src, 'src'), path.join(dst, 'src'));
+    fileCopy(path.join(src, 'PROJECT.txt'), path.join(dst, 'PROJECT.txt'));
+    fileCopy(path.join(src, 'LICENSE'), path.join(dst, 'LICENSE'));
+    fileCopy(path.join(src, 'README.md'), path.join(dst, 'README.md'));
+    fileCopy(path.join(src, 'lib'), path.join(dst, 'lib'));
+    fileCopy(path.join(src, 'bin'), path.join(dst, 'bin'));
     fileCopy(path.join(src, 'test'), path.join(dst, 'test'));
 
     // Installing?
@@ -184,9 +214,7 @@ function main()
             let npkg = `${cfg.name}-${cfg.version}.tgz`
             let spkg = path.join(dst, npkg);
             if (!fs.existsSync(spkg))
-            {   Log(`Failed to create package : ${spkg}`);
-                return;
-            }
+                throw `Failed to create package : ${spkg}`;
 
             // Copy package file
             let rpkg = path.join(src, 'pkg');
@@ -214,10 +242,11 @@ function main()
 }
 
 // Exit handling
-process.on('exit',function() {});
-process.on('SIGINT',function() { Log('~ keyboard ~'); process.exit(-1); });
-process.on('uncaughtException',function(e) { Log('~ uncaught ~', e); process.exit(-1); });
+process.on('exit', function() {});
+process.on('SIGINT', function() { Log('~ keyboard ~'); process.exit(-1); });
+process.on('uncaughtException', function(e) { Log('~ uncaught ~', e); process.exit(-1); });
 
 // Run the program
 main();
+
 

@@ -148,6 +148,8 @@ async function main()
 {
     Log('--- STARTING TESTS ---\n');
 
+    Log(dm.__info__);
+
     await test_1();
 
     Log('--- DONE ---');
