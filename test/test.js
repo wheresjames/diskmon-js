@@ -21,7 +21,7 @@ function mktmpfile(dir, name, add='')
         fs.writeFileSync(path.join(dir, `${name}.txt`), `File: ${name}.txt`, "utf8");
 }
 
-async function test_1(dir)
+async function test_1()
 {
     let tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), 'diskmon-'));
 
@@ -144,6 +144,24 @@ async function test_1(dir)
     fs.rmdirSync(tmpdir, { recursive: true });
 }
 
+async function test_2()
+{
+    let loop = 5;
+    let fstats = {};
+    while (loop--)
+    {
+        dm.fileScan(os.tmpdir(), fstats, {recursive:true});
+        Log('-----------------------------------------');
+        for (let k in fstats)
+        {
+            let v = fstats[k];
+            if (v.isDir)
+                Log(`${v.name} ${v.age}`);
+        }
+        await Timer(1);
+    }
+}
+
 async function main()
 {
     Log('--- STARTING TESTS ---\n');
@@ -151,6 +169,7 @@ async function main()
     Log(dm.__info__);
 
     await test_1();
+    // await test_2();
 
     Log('--- DONE ---');
 }
