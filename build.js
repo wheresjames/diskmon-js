@@ -160,7 +160,7 @@ function createDox()
 
 function main()
 {
-    let _p = parseParams(process.argv, {'i':'install'});
+    let _p = parseParams(process.argv, {'i':'install', 'g': 'global'});
     Log("Command", _p);
 
     let src = __dirname;
@@ -191,13 +191,9 @@ function main()
     if (!fs.existsSync(pck_out))
         throw `Failed to create package file : ${pck_out}`;
 
-    // Copy source files
-    fileCopy(path.join(src, 'PROJECT.txt'), path.join(dst, 'PROJECT.txt'));
-    fileCopy(path.join(src, 'LICENSE'), path.join(dst, 'LICENSE'));
-    fileCopy(path.join(src, 'README.md'), path.join(dst, 'README.md'));
-    fileCopy(path.join(src, 'lib'), path.join(dst, 'lib'));
-    fileCopy(path.join(src, 'bin'), path.join(dst, 'bin'));
-    fileCopy(path.join(src, 'test'), path.join(dst, 'test'));
+    // Copy install files
+    for (let v of ['PROJECT.txt', 'README.md', 'LICENSE', 'lib', 'bin', 'test'])
+        fileCopy(path.join(src, v), path.join(dst, v));
 
     // Installing?
     Log("\nPackaging...");
@@ -231,7 +227,8 @@ function main()
             if (_p.install)
             {
                 Log("\nInstalling...");
-                let cmd = `sudo npm install -g ${dpkg}`;
+                let sudo = fs.existsSync('/usr/bin/sudo') ? 'sudo ' : '';
+                let cmd = _p.g ? (sudo+`npm install -g ${dpkg}`) : `npm install ${dpkg}`;
                 cp.exec(cmd, { cwd: dst }, (error, stdout, stderr) =>
                     {
                         Log(stdout);
