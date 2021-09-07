@@ -21,7 +21,7 @@ async function main()
                     Log(`[CREATED] ${changed[0].name} {size=${changed[0].size}}`);
                 else if (changed[0].deleted)
                     Log(`[DELETED] ${changed[0].name} {size=${changed[0].size}}`);
-                else if (changed[0].deleted)
+                else if (changed[0].changed)
                     Log(`[CHANGED] ${changed[0].name} {size=${changed[0].size}}`);
         }
         await Sleep(1);

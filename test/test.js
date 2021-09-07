@@ -162,6 +162,47 @@ async function test_2()
     }
 }
 
+async function test_3()
+{
+    let tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), 'diskmon-'));
+
+    if (!fs.existsSync(tmpdir))
+        throw `Failed to create temp directory`;
+
+    Log(`Using temp directory: ${tmpdir}`);
+
+    let dir1 = path.join(tmpdir, 'dir1');
+    fs.mkdirSync(dir1);
+    mktmpfile(dir1, ['test1', 'test2', 'test3']);
+
+    let dir2 = path.join(tmpdir, 'dir2');
+    fs.mkdirSync(dir2);
+    mktmpfile(dir2, ['test1', 'test2', 'test3']);
+
+    //---------------------------------------------------------------
+    // Initial scan
+    let fstats = {};
+    let opts = {path_filter: "dir1", recursive:true};
+    dm.fileScan(tmpdir, fstats, opts);
+
+    let checked = 0;
+    let files = dm.filterByAge(fstats, 0);
+    for (let k in files)
+    {
+        let v = files[k];
+        if (v.isFile)
+            checked++,
+            Log(`${v.path} -> ${v.rpath} -> ${v.name}`),
+            assert(path.join('dir1', v.name) == v.rpath);
+    }
+    assert(checked == 3);
+
+    // Cleanup test files
+    Log(`Removing temp directory: ${tmpdir}`);
+    fs.rmdirSync(tmpdir, { recursive: true });
+
+}
+
 async function main()
 {
     Log('--- STARTING TESTS ---\n');
@@ -170,6 +211,7 @@ async function main()
 
     await test_1();
     // await test_2();
+    await test_3();
 
     Log('--- DONE ---');
 }
