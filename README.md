@@ -1,7 +1,7 @@
 
 # diskmon
 
-Groups list items using a compare function.
+Track changes in files and directories.
 
 ``` javascript
 
