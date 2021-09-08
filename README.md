@@ -10,17 +10,22 @@ Track changes in files and directories.
     let fstats = {};
     for(;;)
     {
-        let change = dm.fileScan('/tmp', fstats, {filter: '.txt'});
+        let change = dm.fileScan('/tmp', fstats, {filter: '.txt', notifyExisting:true});
         if (change)
         {
             let changed = dm.getChanged(fstats);
-            if (changed.length)
-                if (changed[0].created)
-                    Log(`[CREATED] ${changed[0].name} {size=${changed[0].size}}`);
-                else if (changed[0].deleted)
-                    Log(`[DELETED] ${changed[0].name} {size=${changed[0].size}}`);
-                else if (changed[0].changed)
-                    Log(`[CHANGED] ${changed[0].name} {size=${changed[0].size}}`);
+            for (let k in changed)
+            {
+                let v = changed[k];
+                if (v.created)
+                    Log(`[CREATED] ${v.name} {size=${v.size}}`);
+                else if (v.deleted)
+                    Log(`[DELETED] ${v.name} {size=${v.size}}`);
+                else if (v.changed)
+                    Log(`[CHANGED] ${v.name} {size=${v.size}}`);
+                else if (v.existed)
+                    Log(`[EXISTED] ${v.name} {size=${v.size}}`);
+            }
         }
         await Sleep(1);
     }
@@ -55,24 +60,31 @@ Track changes in files and directories.
 
     const Log = console.log;
     const Fmt = JSON.stringify;
-    const Sleep = secs => new Promise( res => setTimeout(res, secs*1000));
+    const Sleep = secs => new Promise(res => setTimeout(res, secs*1000));
 
     async function main()
     {
+        Log(`Monitoring (${dm.__info__.version})...`);
+
         let fstats = {};
         for(;;)
         {
-            let change = dm.fileScan('/tmp', fstats, {filter: '.txt'});
+            let change = dm.fileScan('/tmp', fstats, {notifyExisting:true});
             if (change)
             {
                 let changed = dm.getChanged(fstats);
-                if (changed.length)
-                    if (changed[0].created)
-                        Log(`[CREATED] ${changed[0].name} {size=${changed[0].size}}`);
-                    else if (changed[0].deleted)
-                        Log(`[DELETED] ${changed[0].name} {size=${changed[0].size}}`);
-                    else if (changed[0].changed)
-                        Log(`[CHANGED] ${changed[0].name} {size=${changed[0].size}}`);
+                for (let k in changed)
+                {
+                    let v = changed[k];
+                    if (v.created)
+                        Log(`[CREATED] ${v.name} {size=${v.size}}`);
+                    else if (v.deleted)
+                        Log(`[DELETED] ${v.name} {size=${v.size}}`);
+                    else if (v.changed)
+                        Log(`[CHANGED] ${v.name} {size=${v.size}}`);
+                    else if (v.existed)
+                        Log(`[EXISTED] ${v.name} {size=${v.size}}`);
+                }
             }
             await Sleep(1);
         }

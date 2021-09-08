@@ -182,9 +182,18 @@ async function test_3()
     //---------------------------------------------------------------
     // Initial scan
     let fstats = {};
-    let opts = {path_filter: "dir1", recursive:true};
-    dm.fileScan(tmpdir, fstats, opts);
+    let opts = {path_filter: "dir1", recursive:true, notifyExisting:true};
+    let changed = dm.fileScan(tmpdir, fstats, opts);
+    assert(3 == changed);
+    let existed = dm.getChanged(fstats);
+    assert(3 == existed.length);
+    for (let k in existed)
+        assert(existed[k].existed);
 
+    changed = dm.fileScan(tmpdir, fstats, opts);
+    assert(0 == changed);
+
+    // Check relative path
     let checked = 0;
     let files = dm.filterByAge(fstats, 0);
     for (let k in files)
@@ -195,12 +204,22 @@ async function test_3()
             Log(`${v.path} -> ${v.rpath} -> ${v.name}`),
             assert(path.join('dir1', v.name) == v.rpath);
     }
-    assert(checked == 3);
+    assert(3 == checked);
+
+    // Test filter
+    let filtered = dm.filterFiles(fstats, (v)=>v.name == 'test1.txt');
+    assert(1 == filtered.length);
+    assert('test1.txt' == filtered[0].name);
+
+    // Filter directories
+    let fdirs = dm.filter(fstats, (v)=>v.isDir);
+    assert(1 == fdirs.length);
+    assert('dir1' == fdirs[0].name);
+    assert(3 == fdirs[0].numFiles);
 
     // Cleanup test files
     Log(`Removing temp directory: ${tmpdir}`);
     fs.rmdirSync(tmpdir, { recursive: true });
-
 }
 
 async function main()
